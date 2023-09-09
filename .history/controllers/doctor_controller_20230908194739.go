@@ -248,7 +248,7 @@ func GetAllDoctors(c echo.Context) error {
 	return c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": doctorRequest}})
 }
 
-func GetDoctorsBySpecialty(c echo.Context) error {
+func GetAllDoctorsBySpecialty(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	specialty := c.QueryParam("specialty")
 

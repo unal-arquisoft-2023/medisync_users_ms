@@ -19,7 +19,7 @@ func UserRoute(e *echo.Echo) {
 	e.GET("/doctor/:doctorId", controllers.GetDoctor)
 	e.PUT("/doctor/:doctorId", controllers.UpdateDoctor)
 	e.GET("/doctors", controllers.GetAllDoctors)
-	e.GET("/doctors", controllers.GetDoctorsBySpecialty)
+	e.GET("/doctors/?specialty/", controllers.GetDoctorsBySpecialty)
 
 	//admin y secretarios
 

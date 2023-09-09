@@ -252,46 +252,48 @@ func GetDoctorsBySpecialty(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	specialty := c.QueryParam("specialty")
 
-	var doctorRequest []dtos.CreateDoctorRequest
-	defer cancel()
+	return c.JSON(200, &echo.Map{specialty})
 
-	cursor, err := doctorCollection.Find(ctx, bson.M{"specialty": specialty})
+	// var doctorRequest []dtos.CreateDoctorRequest
+	// defer cancel()
 
-	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
-	}
+	// cursor, err := doctorCollection.Find(ctx, bson.M{"specialty": specialty})
 
-	for cursor.Next(ctx) {
-		var doctor models.Doctor
-		err := cursor.Decode(&doctor)
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
-		}
+	// if err != nil {
+	// 	return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+	// }
 
-		var user models.User
-		err = userCollection.FindOne(ctx, bson.M{"_id": doctor.UserId}).Decode(&user)
+	// for cursor.Next(ctx) {
+	// 	var doctor models.Doctor
+	// 	err := cursor.Decode(&doctor)
+	// 	if err != nil {
+	// 		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+	// 	}
 
-		if err != nil {
-			return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
-		}
+	// 	var user models.User
+	// 	err = userCollection.FindOne(ctx, bson.M{"_id": doctor.UserId}).Decode(&user)
 
-		var doctorResponse dtos.CreateDoctorRequest
-		doctorResponse.Id = user.Id
-		doctorResponse.Name = dtos.Name(user.Name)
-		doctorResponse.Email = user.Email
-		doctorResponse.Phone = user.Phone
-		doctorResponse.Location = dtos.Location(user.Location)
-		doctorResponse.Title = user.Title
-		doctorResponse.DateOfBirth = user.DateOfBirth
-		doctorResponse.RegisterDate = user.RegisterDate
-		doctorResponse.Status = dtos.UserStatus(user.Status)
-		doctorResponse.DNI = user.DNI
-		doctorResponse.Specialty = dtos.DoctorSpecialty(doctor.Specialty)
-		doctorResponse.MedicalLicenseID = doctor.MedicalLicenseID
+	// 	if err != nil {
+	// 		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+	// 	}
 
-		doctorRequest = append(doctorRequest, doctorResponse)
-	}
+	// 	var doctorResponse dtos.CreateDoctorRequest
+	// 	doctorResponse.Id = user.Id
+	// 	doctorResponse.Name = dtos.Name(user.Name)
+	// 	doctorResponse.Email = user.Email
+	// 	doctorResponse.Phone = user.Phone
+	// 	doctorResponse.Location = dtos.Location(user.Location)
+	// 	doctorResponse.Title = user.Title
+	// 	doctorResponse.DateOfBirth = user.DateOfBirth
+	// 	doctorResponse.RegisterDate = user.RegisterDate
+	// 	doctorResponse.Status = dtos.UserStatus(user.Status)
+	// 	doctorResponse.DNI = user.DNI
+	// 	doctorResponse.Specialty = dtos.DoctorSpecialty(doctor.Specialty)
+	// 	doctorResponse.MedicalLicenseID = doctor.MedicalLicenseID
 
-	return c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": doctorRequest}})
+	// 	doctorRequest = append(doctorRequest, doctorResponse)
+	// }
+
+	// return c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": doctorRequest}})
 
 }
