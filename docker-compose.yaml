@@ -1,0 +1,32 @@
+version: "3.8"
+
+services:
+  users_ms:
+    container_name: medisync_users_ms 
+    hostname: users_ms
+    image: users_ms_img
+    build:
+      context: ./medisync_users_ms
+    ports:
+      - 6000:6000
+    networks:
+      - appriceit-network
+    links:
+      - "users_db:db"
+    restart: unless-stopped
+
+
+  users_db:
+    container_name: medisync_users_db
+    image: mongo
+    restart: always
+    ports:
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: example
+    networks:
+      - appriceit-network
+
+networks:
+  appriceit-network:
