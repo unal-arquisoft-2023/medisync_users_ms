@@ -2,12 +2,10 @@ package controllers
 
 import (
 	"context"
-	"fmt"
 	dtos "medysinc_user_ms/DTOs"
+	db "medysinc_user_ms/db"
 	"medysinc_user_ms/models"
 
-	"medysinc_user_ms/configs"
-	"medysinc_user_ms/responses"
 	"net/http"
 	"time"
 
@@ -23,221 +21,171 @@ func CreatePatient(c echo.Context) error {
 	defer cancel()
 
 	if err := c.Bind(&person); err != nil {
-		return c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	if err := validate.Struct(person); err != nil {
-		return c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": err.Error()}})
-	}
-
-	newPerson := dtos.CreatePatientRequest{
-		Id:           primitive.NewObjectID(),
-		Name:         person.Name,
-		Email:        person.Email,
-		Phone:        person.Phone,
-		Location:     person.Location,
-		Title:        person.Title,
-		DateOfBirth:  person.DateOfBirth,
-		RegisterDate: person.RegisterDate,
-		Status:       person.Status,
-		DNI:          person.DNI,
-		Affiliation:  person.Affiliation,
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	newUser := models.User{
-		Id:           newPerson.Id,
-		Name:         models.Name(newPerson.Name),
-		Email:        newPerson.Email,
-		Phone:        newPerson.Phone,
-		Location:     models.Location(newPerson.Location),
-		Title:        newPerson.Title,
-		DateOfBirth:  newPerson.DateOfBirth,
-		RegisterDate: newPerson.RegisterDate,
-		Status:       models.UserStatus(newPerson.Status),
-		DNI:          newPerson.DNI,
+		Id:           primitive.NewObjectID(),
+		Name:         models.Name(person.Name),
+		Email:        person.Email,
+		Phone:        person.Phone,
+		Location:     models.Location(person.Location),
+		DateOfBirth:  person.DateOfBirth,
+		RegisterDate: person.RegisterDate,
+		Status:       models.UserStatus(person.Status),
+		DNI:          person.DNI,
 	}
 
 	newPatient := models.Patient{
-		Id:          newPerson.Id,
-		UserId:      newPerson.Id,
-		Affiliation: models.PatientAffiliation(newPerson.Affiliation),
+		Id:          primitive.NewObjectID(),
+		UserId:      newUser.Id,
+		Affiliation: models.PatientAffiliation(person.Affiliation),
 	}
 
-	//Inserting the user
+	//Inserting the User
 
-	result, err := userCollection.InsertOne(ctx, newUser)
+	_, err := db.Collections.Users.InsertOne(ctx, newUser)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	//Inserting the patient
 
-	patientCollection := configs.GetCollection(configs.DB, "patients")
-	_, err = patientCollection.InsertOne(ctx, newPatient)
+	result, err := db.Collections.Patient.InsertOne(ctx, newPatient)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: &echo.Map{"data": result.InsertedID}})
+	return c.JSON(http.StatusCreated, echo.Map{"id": result.InsertedID})
 
 }
 
 func GetPatient(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	userId := c.Param("patientId")
+	UserId := c.Param("patientId")
 
 	var patient models.Patient
 	defer cancel()
 
-	objId, _ := primitive.ObjectIDFromHex(userId)
-	err := patientCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&patient)
+	objId, _ := primitive.ObjectIDFromHex(UserId)
+	err := db.Collections.Patient.FindOne(ctx, bson.M{"_id": objId}).Decode(&patient)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	var user models.User
-	err = userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
+	err = db.Collections.Users.FindOne(ctx, bson.M{"_id": patient.UserId}).Decode(&user)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	var patientResponse dtos.CreatePatientRequest
-	patientResponse.Id = user.Id
-	patientResponse.Name = dtos.Name(user.Name)
-	patientResponse.Email = user.Email
-	patientResponse.Phone = user.Phone
-	patientResponse.Location = dtos.Location(user.Location)
-	patientResponse.Title = user.Title
-	patientResponse.DateOfBirth = user.DateOfBirth
-	patientResponse.RegisterDate = user.RegisterDate
-	patientResponse.Status = dtos.UserStatus(user.Status)
-	patientResponse.DNI = user.DNI
-	patientResponse.Affiliation = dtos.PatientAffiliation(patient.Affiliation)
-
-	return c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": patientResponse}})
+	return c.JSON(http.StatusOK, user)
 }
 
 func UpdatePatient(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	userId := c.Param("patientId")
+	UserId := c.Param("patientId")
 
 	var patient models.Patient
 	defer cancel()
 
-	objId, _ := primitive.ObjectIDFromHex(userId)
-	err := patientCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&patient)
+	objId, _ := primitive.ObjectIDFromHex(UserId)
+	err := db.Collections.Patient.FindOne(ctx, bson.M{"_id": objId}).Decode(&patient)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	var user models.User
-	err = userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
+	err = db.Collections.Users.FindOne(ctx, bson.M{"_id": patient.UserId}).Decode(&user)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	var patientRequest dtos.CreatePatientRequest
-	patientRequest.Id = user.Id
-	patientRequest.Name = dtos.Name(user.Name)
-	patientRequest.Email = user.Email
-	patientRequest.Phone = user.Phone
-	patientRequest.Location = dtos.Location(user.Location)
-	patientRequest.Title = user.Title
-	patientRequest.DateOfBirth = user.DateOfBirth
-	patientRequest.RegisterDate = user.RegisterDate
-	patientRequest.Status = dtos.UserStatus(user.Status)
-	patientRequest.DNI = user.DNI
-	patientRequest.Affiliation = dtos.PatientAffiliation(patient.Affiliation)
-
-	if err := c.Bind(&patientRequest); err != nil {
-		return c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": err.Error()}})
+	var PatReq dtos.CreatePatientRequest
+	if err := c.Bind(&PatReq); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 
 	}
 
-	if err := validate.Struct(patientRequest); err != nil {
-		return c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": err.Error()}})
+	if err := validate.Struct(PatReq); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 
 	}
 
-	newPatient := models.Patient{
-		Id:          patientRequest.Id,
-		UserId:      patientRequest.Id,
-		Affiliation: models.PatientAffiliation(patientRequest.Affiliation),
-	}
+	user.DNI = PatReq.DNI
+	user.Email = PatReq.Email
+	user.Location = PatReq.Location
+	user.Name = PatReq.Name
+	user.Phone = PatReq.Phone
+	user.RegisterDate = PatReq.RegisterDate
+	user.Status = PatReq.Status
+	user.DateOfBirth = PatReq.DateOfBirth
 
-	newUser := models.User{
-		Id:           patientRequest.Id,
-		Name:         models.Name(patientRequest.Name),
-		Email:        patientRequest.Email,
-		Phone:        patientRequest.Phone,
-		Location:     models.Location(patientRequest.Location),
-		Title:        patientRequest.Title,
-		DateOfBirth:  patientRequest.DateOfBirth,
-		RegisterDate: patientRequest.RegisterDate,
-		Status:       models.UserStatus(patientRequest.Status),
-		DNI:          patientRequest.DNI,
-	}
+	patient.Affiliation = models.PatientAffiliation(PatReq.Affiliation)
 
-	_, err = patientCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": newPatient})
+	_, err = db.Collections.Patient.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": patient})
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	_, err = userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": newUser})
+	_, err = db.Collections.Users.UpdateOne(ctx, bson.M{"_id": patient.UserId}, bson.M{"$set": user})
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": newUser}})
+	return c.JSON(http.StatusOK, "updated")
 
 }
 
 func GetAllPatients(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	var patientRequest []dtos.CreatePatientRequest
+	var allPatients []dtos.PatientResponse
 	defer cancel()
 
-	cursor, err := patientCollection.Find(ctx, bson.M{})
+	cursor, err := db.Collections.Patient.Find(ctx, bson.M{})
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	for cursor.Next(ctx) {
 		var patient models.Patient
 		err := cursor.Decode(&patient)
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
 
 		var user models.User
-		err = userCollection.FindOne(ctx, bson.M{"_id": patient.UserId}).Decode(&user)
+		err = db.Collections.Users.FindOne(ctx, bson.M{"_id": patient.UserId}).Decode(&user)
 
 		if err != nil {
-			return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+			return c.JSON(http.StatusInternalServerError, err.Error())
 		}
 
-		var patientResponse dtos.CreatePatientRequest
-		patientResponse.Id = user.Id
-		patientResponse.Name = dtos.Name(user.Name)
+		var patientResponse dtos.PatientResponse
+		patientResponse.Id = patient.Id.Hex()
+		patientResponse.Name = user.Name
 		patientResponse.Email = user.Email
 		patientResponse.Phone = user.Phone
-		patientResponse.Location = dtos.Location(user.Location)
-		patientResponse.Title = user.Title
+		patientResponse.Location = user.Location
 		patientResponse.DateOfBirth = user.DateOfBirth
 		patientResponse.RegisterDate = user.RegisterDate
-		patientResponse.Status = dtos.UserStatus(user.Status)
+		patientResponse.Status = user.Status
 		patientResponse.DNI = user.DNI
-		patientResponse.Affiliation = dtos.PatientAffiliation(patient.Affiliation)
+		patientResponse.Affiliation = patient.Affiliation
 
-		patientRequest = append(patientRequest, patientResponse)
+		allPatients = append(allPatients, patientResponse)
 	}
 
-	return c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": patientRequest}})
+	return c.JSON(http.StatusOK, allPatients)
 }

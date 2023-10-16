@@ -3,10 +3,10 @@ package controllers
 import (
 	"context"
 	"fmt"
+	dtos "medysinc_user_ms/DTOs"
+	db "medysinc_user_ms/db"
 	"medysinc_user_ms/models"
 
-	"medysinc_user_ms/configs"
-	"medysinc_user_ms/responses"
 	"net/http"
 	"time"
 
@@ -17,92 +17,153 @@ import (
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-var userCollection *mongo.Collection = configs.GetCollection(configs.DB, "users")
-var patientCollection *mongo.Collection = configs.GetCollection(configs.DB, "patients")
-var doctorCollection *mongo.Collection = configs.GetCollection(configs.DB, "doctors")
 var validate = validator.New()
 
 func CreateStaff(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	var user models.User
+	var stf dtos.CreateStaffRequest
 
 	defer cancel()
 
-	if err := c.Bind(&user); err != nil {
-		return c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": err.Error()}})
+	if err := c.Bind(&stf); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
-	if err := validate.Struct(user); err != nil {
-		return c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": err.Error()}})
+	if err := validate.Struct(stf); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
 	}
 
 	newUser := models.User{
 		Id:           primitive.NewObjectID(),
-		Name:         user.Name,
-		Email:        user.Email,
-		Phone:        user.Phone,
-		Location:     user.Location,
-		Title:        user.Title,
-		DateOfBirth:  user.DateOfBirth,
-		RegisterDate: user.RegisterDate,
-		Status:       user.Status,
-		DNI:          user.DNI,
+		Name:         stf.Name,
+		Email:        stf.Email,
+		Phone:        stf.Phone,
+		Location:     stf.Location,
+		DateOfBirth:  stf.DateOfBirth,
+		RegisterDate: stf.RegisterDate,
+		Status:       stf.Status,
+		DNI:          stf.DNI,
+	}
+
+	newStaff := models.Staff{
+		Id:       primitive.NewObjectID(),
+		UserId:   newUser.Id,
+		Position: stf.Position,
 	}
 
 	//Inserting the user
 
-	result, err := userCollection.InsertOne(ctx, newUser)
+	_, err := db.Collections.Users.InsertOne(ctx, newUser)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: "error", Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusCreated, responses.UserResponse{Status: http.StatusCreated, Message: "success", Data: &echo.Map{"data": result.InsertedID}})
+	resStf, err := db.Collections.Staff.InsertOne(ctx, newStaff)
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusCreated, echo.Map{"id": resStf.InsertedID})
 
 }
 
 func GetStaffMember(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	userId := c.Param("userId")
-
-	var user models.User
+	staffId := c.Param("staffId")
 	defer cancel()
 
-	objId, _ := primitive.ObjectIDFromHex(userId)
-	err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
+	var staff models.Staff
+	var user models.User
+
+	objId, _ := primitive.ObjectIDFromHex(staffId)
+	err := db.Collections.Staff.FindOne(ctx, bson.M{"_id": objId}).Decode(&staff)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		fmt.Println("Error 1", err)
+		if mongo.ErrNilDocument == err {
+			return c.JSON(http.StatusNotFound, fmt.Sprintf("Not found %s", objId))
+		}
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
-	return c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": user}})
+
+	err2 := db.Collections.Users.FindOne(ctx, bson.M{"_id": staff.UserId}).Decode(&user)
+
+	if err2 != nil {
+		return c.JSON(http.StatusInternalServerError, err2.Error())
+	}
+
+	var stfRes dtos.StaffResponse
+
+	stfRes.Id = staff.Id.Hex()
+	stfRes.Name = user.Name
+	stfRes.Email = user.Email
+	stfRes.Phone = user.Phone
+	stfRes.Location = user.Location
+	stfRes.DateOfBirth = user.DateOfBirth
+	stfRes.RegisterDate = user.RegisterDate
+	stfRes.Status = user.Status
+	stfRes.DNI = user.DNI
+	stfRes.Position = staff.Position
+
+	return c.JSON(http.StatusOK, stfRes)
 }
 
-func UpdateStaffMember(c echo.Context) error {
+func UpdateStaff(c echo.Context) error {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	userId := c.Param("userId")
+	UserId := c.Param("staffId")
 
-	var user models.User
+	var staff models.Staff
 	defer cancel()
 
-	objId, _ := primitive.ObjectIDFromHex(userId)
-	err := userCollection.FindOne(ctx, bson.M{"_id": objId}).Decode(&user)
+	objId, _ := primitive.ObjectIDFromHex(UserId)
+	err := db.Collections.Staff.FindOne(ctx, bson.M{"_id": objId}).Decode(&staff)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	if err := c.Bind(&user); err != nil {
-		return c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": err.Error()}})
-	}
-
-	if err := validate.Struct(user); err != nil {
-		return c.JSON(http.StatusBadRequest, responses.UserResponse{Status: http.StatusBadRequest, Message: "error", Data: &echo.Map{"data": err.Error()}})
-	}
-
-	_, err = userCollection.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": user})
+	var user models.User
+	err = db.Collections.Users.FindOne(ctx, bson.M{"_id": staff.UserId}).Decode(&user)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, responses.UserResponse{Status: http.StatusInternalServerError, Message: fmt.Sprintf(" error %s", objId), Data: &echo.Map{"data": err.Error()}})
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, responses.UserResponse{Status: http.StatusOK, Message: "success", Data: &echo.Map{"data": user}})
+	var PatReq dtos.CreateStaffRequest
+	if err := c.Bind(&PatReq); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+
+	}
+
+	if err := validate.Struct(PatReq); err != nil {
+		return c.JSON(http.StatusBadRequest, err.Error())
+
+	}
+
+	user.DNI = PatReq.DNI
+	user.Email = PatReq.Email
+	user.Location = models.Location(PatReq.Location)
+	user.Name = models.Name(PatReq.Name)
+	user.Phone = PatReq.Phone
+	user.RegisterDate = PatReq.RegisterDate
+	user.Status = models.UserStatus(PatReq.Status)
+	user.DateOfBirth = PatReq.DateOfBirth
+
+	staff.Position = PatReq.Position
+
+	_, err = db.Collections.Staff.UpdateOne(ctx, bson.M{"_id": objId}, bson.M{"$set": staff})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	_, err = db.Collections.Users.UpdateOne(ctx, bson.M{"_id": staff.UserId}, bson.M{"$set": user})
+
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
+	}
+
+	return c.JSON(http.StatusOK, "updated")
+
 }

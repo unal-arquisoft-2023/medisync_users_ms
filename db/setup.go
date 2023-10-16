@@ -1,4 +1,4 @@
-package configs
+package db
 
 import (
 	"context"
@@ -37,4 +37,18 @@ var DB *mongo.Client = ConnectDB()
 func GetCollection(client *mongo.Client, collectionName string) *mongo.Collection {
 	collection := client.Database("golangAPI").Collection(collectionName)
 	return collection
+}
+
+type BaseCollections struct {
+	Users   *mongo.Collection
+	Staff   *mongo.Collection
+	Doctor  *mongo.Collection
+	Patient *mongo.Collection
+}
+
+var Collections = BaseCollections{
+	Users:   GetCollection(DB, "users"),
+	Staff:   GetCollection(DB, "staff"),
+	Doctor:  GetCollection(DB, "doctor"),
+	Patient: GetCollection(DB, "patient"),
 }

@@ -11,6 +11,6 @@ func StaffRoute(e *echo.Echo) {
 	//admin y secretarios
 
 	e.POST("/staff", controllers.CreateStaff)
-	e.GET("/staff/:userId", controllers.GetStaffMember)
-	e.PUT("/staff/:userId", controllers.UpdateStaffMember)
+	e.GET("/staff/:staffId", controllers.GetStaffMember)
+	e.PUT("/staff/:staffId", controllers.UpdateStaff)
 }

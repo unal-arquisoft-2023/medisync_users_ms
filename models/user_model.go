@@ -63,11 +63,16 @@ type User struct {
 	Email        string             `json:"email,omitempty" validate:"required,email"`
 	Phone        string             `json:"phone,omitempty" validate:"required"`
 	Location     Location           `json:"location,omitempty" validate:"required"`
-	Title        string             `json:"title,omitempty" validate:"required"`
 	DateOfBirth  string             `json:"dateOfBirth,omitempty" validate:"required"`
 	RegisterDate string             `json:"registerDate,omitempty" validate:"required"`
 	Status       UserStatus         `json:"status,omitempty" validate:"required"`
 	DNI          string             `json:"dni,omitempty" validate:"required"`
+}
+
+type Staff struct {
+	Id       primitive.ObjectID `json:"id,omitempty" bson:"_id"`
+	UserId   primitive.ObjectID `json:"userId,omitempty" validate:"required"` // Relación con User
+	Position string             `json:"position,omitempty" validate:"required"`
 }
 
 type Patient struct {
