@@ -30,15 +30,15 @@ func CreateDoctor(c echo.Context) error {
 	}
 
 	newUser := models.User{
-		Id:           primitive.NewObjectID(),
-		Name:         models.Name(docReq.Name),
-		Email:        docReq.Email,
-		Phone:        docReq.Phone,
-		Location:     models.Location(docReq.Location),
-		DateOfBirth:  docReq.DateOfBirth,
-		RegisterDate: docReq.RegisterDate,
-		Status:       models.UserStatus(docReq.Status),
-		DNI:          docReq.DNI,
+		Id:               primitive.NewObjectID(),
+		Name:             models.Name(docReq.Name),
+		Email:            docReq.Email,
+		Phone:            docReq.Phone,
+		Location:         models.Location(docReq.Location),
+		DateOfBirth:      docReq.DateOfBirth,
+		RegistrationDate: docReq.RegistrationDate,
+		Status:           models.UserStatus(docReq.Status),
+		CardId:           docReq.CardId,
 	}
 
 	newDoctor := models.Doctor{
@@ -94,9 +94,9 @@ func GetDoctor(c echo.Context) error {
 	DoctorResponse.Phone = user.Phone
 	DoctorResponse.Location = user.Location
 	DoctorResponse.DateOfBirth = user.DateOfBirth
-	DoctorResponse.RegisterDate = user.RegisterDate
+	DoctorResponse.RegistrationDate = user.RegistrationDate
 	DoctorResponse.Status = user.Status
-	DoctorResponse.DNI = user.DNI
+	DoctorResponse.CardId = user.CardId
 	DoctorResponse.Specialty = doctor.Specialty
 	DoctorResponse.MedicalLicenseID = doctor.MedicalLicenseID
 
@@ -139,12 +139,12 @@ func UpdateDoctor(c echo.Context) error {
 	doctor.MedicalLicenseID = docReq.MedicalLicenseID
 	doctor.Specialty = docReq.Specialty
 
-	user.DNI = docReq.DNI
+	user.CardId = docReq.CardId
 	user.Email = docReq.Email
 	user.Location = docReq.Location
 	user.Name = docReq.Name
 	user.Phone = docReq.Phone
-	user.RegisterDate = docReq.RegisterDate
+	user.RegistrationDate = docReq.RegistrationDate
 	user.Status = docReq.Status
 	user.DateOfBirth = docReq.DateOfBirth
 
@@ -203,9 +203,9 @@ func GetAllDoctors(c echo.Context) error {
 		docRes.Phone = user.Phone
 		docRes.Location = user.Location
 		docRes.DateOfBirth = user.DateOfBirth
-		docRes.RegisterDate = user.RegisterDate
+		docRes.RegistrationDate = user.RegistrationDate
 		docRes.Status = user.Status
-		docRes.DNI = user.DNI
+		docRes.CardId = user.CardId
 		docRes.Specialty = doctor.Specialty
 		docRes.MedicalLicenseID = doctor.MedicalLicenseID
 

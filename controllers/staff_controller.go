@@ -34,15 +34,15 @@ func CreateStaff(c echo.Context) error {
 	}
 
 	newUser := models.User{
-		Id:           primitive.NewObjectID(),
-		Name:         stf.Name,
-		Email:        stf.Email,
-		Phone:        stf.Phone,
-		Location:     stf.Location,
-		DateOfBirth:  stf.DateOfBirth,
-		RegisterDate: stf.RegisterDate,
-		Status:       stf.Status,
-		DNI:          stf.DNI,
+		Id:               primitive.NewObjectID(),
+		Name:             stf.Name,
+		Email:            stf.Email,
+		Phone:            stf.Phone,
+		Location:         stf.Location,
+		DateOfBirth:      stf.DateOfBirth,
+		RegistrationDate: stf.RegistrationDate,
+		Status:           stf.Status,
+		CardId:           stf.CardId,
 	}
 
 	newStaff := models.Staff{
@@ -101,9 +101,9 @@ func GetStaffMember(c echo.Context) error {
 	stfRes.Phone = user.Phone
 	stfRes.Location = user.Location
 	stfRes.DateOfBirth = user.DateOfBirth
-	stfRes.RegisterDate = user.RegisterDate
+	stfRes.RegistrationDate = user.RegistrationDate
 	stfRes.Status = user.Status
-	stfRes.DNI = user.DNI
+	stfRes.CardId = user.CardId
 	stfRes.Position = staff.Position
 
 	return c.JSON(http.StatusOK, stfRes)
@@ -141,12 +141,12 @@ func UpdateStaff(c echo.Context) error {
 
 	}
 
-	user.DNI = PatReq.DNI
+	user.CardId = PatReq.CardId
 	user.Email = PatReq.Email
 	user.Location = models.Location(PatReq.Location)
 	user.Name = models.Name(PatReq.Name)
 	user.Phone = PatReq.Phone
-	user.RegisterDate = PatReq.RegisterDate
+	user.RegistrationDate = PatReq.RegistrationDate
 	user.Status = models.UserStatus(PatReq.Status)
 	user.DateOfBirth = PatReq.DateOfBirth
 

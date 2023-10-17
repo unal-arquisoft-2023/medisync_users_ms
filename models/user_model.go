@@ -58,15 +58,15 @@ const (
 )
 
 type User struct {
-	Id           primitive.ObjectID `json:"id,omitempty" bson:"_id"`
-	Name         Name               `json:"name,omitempty" validate:"required"`
-	Email        string             `json:"email,omitempty" validate:"required,email"`
-	Phone        string             `json:"phone,omitempty" validate:"required"`
-	Location     Location           `json:"location,omitempty" validate:"required"`
-	DateOfBirth  string             `json:"dateOfBirth,omitempty" validate:"required"`
-	RegisterDate string             `json:"registerDate,omitempty" validate:"required"`
-	Status       UserStatus         `json:"status,omitempty" validate:"required"`
-	DNI          string             `json:"dni,omitempty" validate:"required"`
+	Id               primitive.ObjectID `json:"id,omitempty" bson:"_id"`
+	Name             Name               `json:"name,omitempty" validate:"required"`
+	Email            string             `json:"email,omitempty" validate:"required,email"`
+	Phone            string             `json:"phone,omitempty" validate:"required"`
+	Location         Location           `json:"location,omitempty" validate:"required"`
+	DateOfBirth      string             `json:"dateOfBirth,omitempty" validate:"required"`
+	RegistrationDate string             `json:"registrationDate,omitempty" validate:"required"`
+	Status           UserStatus         `json:"status,omitempty" validate:"required"`
+	CardId           string             `json:"CardId,omitempty" validate:"required"`
 }
 
 type Staff struct {

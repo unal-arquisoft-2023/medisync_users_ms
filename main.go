@@ -1,7 +1,6 @@
 package main
 
 import (
-	"medysinc_user_ms/db"
 	"medysinc_user_ms/routes"
 
 	"github.com/labstack/echo/v4"
@@ -9,9 +8,6 @@ import (
 
 func main() {
 	e := echo.New()
-
-	//run database
-	db.ConnectDB()
 
 	//routes
 	routes.StaffRoute(e)

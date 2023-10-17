@@ -29,15 +29,15 @@ func CreatePatient(c echo.Context) error {
 	}
 
 	newUser := models.User{
-		Id:           primitive.NewObjectID(),
-		Name:         models.Name(person.Name),
-		Email:        person.Email,
-		Phone:        person.Phone,
-		Location:     models.Location(person.Location),
-		DateOfBirth:  person.DateOfBirth,
-		RegisterDate: person.RegisterDate,
-		Status:       models.UserStatus(person.Status),
-		DNI:          person.DNI,
+		Id:               primitive.NewObjectID(),
+		Name:             models.Name(person.Name),
+		Email:            person.Email,
+		Phone:            person.Phone,
+		Location:         models.Location(person.Location),
+		DateOfBirth:      person.DateOfBirth,
+		RegistrationDate: person.RegistrationDate,
+		Status:           models.UserStatus(person.Status),
+		CardId:           person.RegistrationDate,
 	}
 
 	newPatient := models.Patient{
@@ -85,7 +85,19 @@ func GetPatient(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	return c.JSON(http.StatusOK, user)
+	var userResponse dtos.PatientResponse
+	userResponse.Id = patient.Id.Hex()
+	userResponse.Name = user.Name
+	userResponse.Email = user.Email
+	userResponse.Phone = user.Phone
+	userResponse.Location = user.Location
+	userResponse.DateOfBirth = user.DateOfBirth
+	userResponse.RegistrationDate = user.RegistrationDate
+	userResponse.Status = user.Status
+	userResponse.CardId = user.CardId
+	userResponse.Affiliation = patient.Affiliation
+
+	return c.JSON(http.StatusOK, userResponse)
 }
 
 func UpdatePatient(c echo.Context) error {
@@ -120,12 +132,12 @@ func UpdatePatient(c echo.Context) error {
 
 	}
 
-	user.DNI = PatReq.DNI
+	user.CardId = PatReq.CardId
 	user.Email = PatReq.Email
 	user.Location = PatReq.Location
 	user.Name = PatReq.Name
 	user.Phone = PatReq.Phone
-	user.RegisterDate = PatReq.RegisterDate
+	user.RegistrationDate = PatReq.RegistrationDate
 	user.Status = PatReq.Status
 	user.DateOfBirth = PatReq.DateOfBirth
 
@@ -179,9 +191,9 @@ func GetAllPatients(c echo.Context) error {
 		patientResponse.Phone = user.Phone
 		patientResponse.Location = user.Location
 		patientResponse.DateOfBirth = user.DateOfBirth
-		patientResponse.RegisterDate = user.RegisterDate
+		patientResponse.RegistrationDate = user.RegistrationDate
 		patientResponse.Status = user.Status
-		patientResponse.DNI = user.DNI
+		patientResponse.CardId = user.CardId
 		patientResponse.Affiliation = patient.Affiliation
 
 		allPatients = append(allPatients, patientResponse)
