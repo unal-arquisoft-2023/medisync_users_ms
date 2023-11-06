@@ -6,16 +6,89 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
+type MongoName struct {
+	FirstName string `bson:"firstName,omitempty"`
+	LastName  string `bson:"lastName,omitempty"`
+}
+
+func (mn *MongoName) toDomain() domain.Name {
+	return domain.Name{
+		FirstName: mn.FirstName,
+		LastName:  mn.LastName,
+	}
+}
+
+func mongoNameFromDomain(name domain.Name) MongoName {
+	return MongoName{
+		FirstName: name.FirstName,
+		LastName:  name.LastName,
+	}
+}
+
+type MongoLocation struct {
+	Country string `bson:"country,omitempty"`
+	City    string `bson:"city,omitempty"`
+	Address string `bson:"address,omitempty"`
+}
+
+func (mn *MongoLocation) toDomain() domain.Location {
+	return domain.Location{
+		Country: mn.Country,
+		City:    mn.City,
+		Address: mn.Address,
+	}
+}
+
+func mongoLocFromDomain(loc domain.Location) MongoLocation {
+	return MongoLocation{
+		Country: loc.Country,
+		City:    loc.City,
+		Address: loc.Address,
+	}
+}
+
 // A struct to manage users in the mongo database
-// main difference, the id is changes from string to primitive.ObjectID
-type mongoUser struct {
-	Id               primitive.ObjectID `json:"id,omitempty" bson:"_id"`
-	Name             domain.Name        `json:"name,omitempty" validate:"required"`
-	Email            string             `json:"email,omitempty" validate:"required,email"`
-	Phone            string             `json:"phone,omitempty" validate:"required"`
-	Location         domain.Location    `json:"location,omitempty" validate:"required"`
-	DateOfBirth      string             `json:"dateOfBirth,omitempty" validate:"required"`
-	RegistrationDate string             `json:"registrationDate,omitempty" validate:"required"`
-	Status           domain.UserStatus  `json:"status,omitempty" validate:"required"`
-	CardId           string             `json:"CardId,omitempty" validate:"required"`
+// main difference, the id is changed from string to primitive.ObjectID
+type MongoUser struct {
+	Id               primitive.ObjectID `bson:"_id,omitempty"`
+	Name             MongoName          `bson:"name,omitempty"`
+	Email            string             `bson:"email,omitempty"`
+	Phone            string             `bson:"phone,omitempty"`
+	Location         MongoLocation      `bson:"location,omitempty"`
+	DateOfBirth      string             `bson:"dateOfBirth,omitempty"`
+	RegistrationDate string             `bson:"registrationDate,omitempty"`
+	Status           domain.UserStatus  `bson:"status,omitempty"`
+	CardId           string             `bson:"CardId,omitempty"`
+}
+
+func (mu *MongoUser) toDomain() domain.User {
+	return domain.User{
+		ID:               mu.Id.Hex(),
+		Name:             mu.Name.toDomain(),
+		Email:            mu.Email,
+		Phone:            mu.Phone,
+		Location:         mu.Location.toDomain(),
+		DateOfBirth:      mu.DateOfBirth,
+		RegistrationDate: mu.RegistrationDate,
+		Status:           mu.Status,
+		CardID:           mu.CardId,
+	}
+}
+
+func mongoUserFromDomain(user domain.User) (MongoUser, error) {
+	id, err := primitive.ObjectIDFromHex(user.ID)
+	if err != nil {
+		return MongoUser{}, err
+	}
+	return MongoUser{
+		Id:               id,
+		Name:             mongoNameFromDomain(user.Name),
+		Email:            user.Email,
+		Phone:            user.Phone,
+		Location:         mongoLocFromDomain(user.Location),
+		DateOfBirth:      user.DateOfBirth,
+		RegistrationDate: user.RegistrationDate,
+		Status:           user.Status,
+		CardId:           user.CardID,
+	}, nil
 }

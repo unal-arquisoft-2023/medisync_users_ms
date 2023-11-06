@@ -31,8 +31,9 @@ type PatientUpdateInput struct {
 }
 
 type PatientRepository interface {
-	FindOne(ctx context.Context, id string) (*domain.Patient, error)
-	Create(ctx context.Context, input PatientCreationInput) (*domain.Patient, error)
-	Update(ctx context.Context, input PatientUpdateInput) (*domain.Patient, error)
-	Delete(ctx context.Context, id string) (*domain.Patient, error)
+	FindOne(ctx context.Context, id string) (*domain.Patient, UserRepositoryError)
+	Create(ctx context.Context, input PatientCreationInput) (*domain.Patient, UserRepositoryError)
+	Update(ctx context.Context, input PatientUpdateInput) (*domain.Patient, UserRepositoryError)
+	Suspend(ctx context.Context, id string) (*domain.Patient, UserRepositoryError)
+	Activate(ctx context.Context, id string) (*domain.Patient, UserRepositoryError)
 }

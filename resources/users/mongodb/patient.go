@@ -19,42 +19,49 @@ func NewMongoPatientRepository(coll *mongo.Collection) users.PatientRepository {
 }
 
 type mongoPatient struct {
-	Affiliation domain.PatientAffiliation `json:"affiliation,omitempty" validate:"required"`
-	mongoUser
+	Affiliation domain.PatientAffiliation `bson:"affiliation,omitempty"`
+	MongoUser   `bson:",inline"`
+}
+
+// Converts a mongo patient to a domain patient
+func (mp *mongoPatient) toDomain() domain.Patient {
+	return domain.Patient{
+		User:        mp.MongoUser.toDomain(),
+		Affiliation: mp.Affiliation,
+	}
 }
 
 // Lets you find a patient by its id
-func (r *MongoPatientRepository) FindOne(ctx context.Context, id string) (*domain.Patient, error) {
+func (r *MongoPatientRepository) FindOne(ctx context.Context, id string) (*domain.Patient, users.UserRepositoryError) {
 	objId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		return nil, err
+		return nil, &users.InvalidPropertyError[string]{
+			Property: "id",
+			Value:    id,
+			Reason:   "invalid id",
+		}
 	}
 
 	var mongoPat mongoPatient
-	var patient domain.Patient
 
 	err = r.coll.FindOne(ctx, primitive.M{"_id": objId}).Decode(&mongoPat)
 
 	if err != nil {
-		return nil, err
+		if err == mongo.ErrNoDocuments {
+			return nil, &users.NotFoundError[string]{
+				Resource: "patient",
+				Property: "id",
+				Value:    id,
+			}
+		} else {
+			return nil, &users.InternalError{
+				Message: err.Error(),
+			}
+		}
 	}
 
-	patient = domain.Patient{
-		User: domain.User{
-			ID:               mongoPat.Id.Hex(),
-			Name:             mongoPat.Name,
-			Email:            mongoPat.Email,
-			Phone:            mongoPat.Phone,
-			Location:         mongoPat.Location,
-			DateOfBirth:      mongoPat.DateOfBirth,
-			RegistrationDate: mongoPat.RegistrationDate,
-			Status:           mongoPat.Status,
-			CardID:           mongoPat.CardId,
-		},
-		Affiliation: mongoPat.Affiliation,
-	}
-
+	patient := mongoPat.toDomain()
 	return &patient, nil
 }
 
@@ -62,15 +69,15 @@ func (r *MongoPatientRepository) FindOne(ctx context.Context, id string) (*domai
 func (r *MongoPatientRepository) Create(
 	ctx context.Context,
 	input users.PatientCreationInput,
-) (*domain.Patient, error) {
+) (*domain.Patient, users.UserRepositoryError) {
 
 	mongoPat := mongoPatient{
-		mongoUser: mongoUser{
+		MongoUser: MongoUser{
 			Id:               primitive.NewObjectID(),
-			Name:             input.Name,
+			Name:             mongoNameFromDomain(input.Name),
 			Email:            input.Email,
 			Phone:            input.Phone,
-			Location:         input.Location,
+			Location:         mongoLocFromDomain(input.Location),
 			DateOfBirth:      input.DateOfBirth,
 			RegistrationDate: input.RegistrationDate,
 			Status:           input.Status,
@@ -78,26 +85,23 @@ func (r *MongoPatientRepository) Create(
 		},
 		Affiliation: input.Affiliation,
 	}
+
 	_, err := r.coll.InsertOne(ctx, mongoPat)
 
 	if err != nil {
-		return nil, err
+		if mongo.IsDuplicateKeyError(err) {
+			return nil, &users.AlreadyExistsError[string]{
+				Property: "id",
+				Value:    mongoPat.Id.Hex(),
+			}
+		} else {
+			return nil, &users.InternalError{
+				Message: err.Error(),
+			}
+		}
 	}
 
-	patient := domain.Patient{
-		User: domain.User{
-			ID:               mongoPat.Id.Hex(),
-			Name:             mongoPat.Name,
-			Email:            mongoPat.Email,
-			Phone:            mongoPat.Phone,
-			Location:         mongoPat.Location,
-			DateOfBirth:      mongoPat.DateOfBirth,
-			RegistrationDate: mongoPat.RegistrationDate,
-			Status:           mongoPat.Status,
-			CardID:           mongoPat.CardId,
-		},
-		Affiliation: mongoPat.Affiliation,
-	}
+	patient := mongoPat.toDomain()
 	return &patient, nil
 }
 
@@ -105,20 +109,24 @@ func (r *MongoPatientRepository) Create(
 func (r *MongoPatientRepository) Update(
 	ctx context.Context,
 	input users.PatientUpdateInput,
-) (*domain.Patient, error) {
+) (*domain.Patient, users.UserRepositoryError) {
 	objId, err := primitive.ObjectIDFromHex(input.ID)
 
 	if err != nil {
-		return nil, err
+		return nil, &users.InvalidPropertyError[string]{
+			Property: "id",
+			Value:    input.ID,
+			Reason:   "invalid id",
+		}
 	}
 
 	mongoPat := mongoPatient{
-		mongoUser: mongoUser{
+		MongoUser: MongoUser{
 			Id:               objId,
-			Name:             input.Name,
+			Name:             mongoNameFromDomain(input.Name),
 			Email:            input.Email,
 			Phone:            input.Phone,
-			Location:         input.Location,
+			Location:         mongoLocFromDomain(input.Location),
 			DateOfBirth:      input.DateOfBirth,
 			RegistrationDate: input.RegistrationDate,
 			Status:           input.Status,
@@ -127,58 +135,99 @@ func (r *MongoPatientRepository) Update(
 		Affiliation: input.Affiliation,
 	}
 
-	_, err = r.coll.UpdateOne(ctx, primitive.M{"_id": objId}, primitive.M{"$set": mongoPat})
+	var updatedMongoPat mongoPatient
+	err = r.coll.FindOneAndUpdate(ctx, primitive.M{"_id": objId}, primitive.M{"$set": mongoPat}).Decode(&updatedMongoPat)
 
 	if err != nil {
-		return nil, err
+		if err == mongo.ErrNoDocuments {
+			return nil, &users.NotFoundError[string]{
+				Resource: "patient",
+				Property: "id",
+				Value:    input.ID,
+			}
+		} else {
+			return nil, &users.InternalError{
+				Message: err.Error(),
+			}
+		}
 	}
 
-	patient := domain.Patient{
-		User: domain.User{
-			ID:               mongoPat.Id.Hex(),
-			Name:             mongoPat.Name,
-			Email:            mongoPat.Email,
-			Phone:            mongoPat.Phone,
-			Location:         mongoPat.Location,
-			DateOfBirth:      mongoPat.DateOfBirth,
-			RegistrationDate: mongoPat.RegistrationDate,
-			Status:           mongoPat.Status,
-			CardID:           mongoPat.CardId,
-		},
-		Affiliation: mongoPat.Affiliation,
-	}
+	patient := updatedMongoPat.toDomain()
 	return &patient, nil
 }
 
-// function that lets you delete a patient
-func (r *MongoPatientRepository) Delete(ctx context.Context, id string) (*domain.Patient, error) {
+// function that lets you change the status of a patient to suspended
+func (r *MongoPatientRepository) Suspend(ctx context.Context, id string) (*domain.Patient, users.UserRepositoryError) {
 	objId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		return nil, err
+		return nil, &users.InvalidPropertyError[string]{
+			Property: "id",
+			Value:    id,
+			Reason:   "invalid id",
+		}
 	}
 
 	var mongoPat mongoPatient
 
-	err = r.coll.FindOneAndDelete(ctx, primitive.M{"_id": objId}).Decode(&mongoPat)
+	err = r.coll.FindOneAndUpdate(
+		ctx,
+		primitive.M{"_id": objId},
+		primitive.M{"$set": primitive.M{"status": domain.Suspended}},
+	).Decode(&mongoPat)
 
 	if err != nil {
-		return nil, err
+		if err == mongo.ErrNoDocuments {
+			return nil, &users.NotFoundError[string]{
+				Resource: "patient",
+				Property: "id",
+				Value:    id,
+			}
+		} else {
+			return nil, &users.InternalError{
+				Message: err.Error(),
+			}
+		}
 	}
 
-	patient := domain.Patient{
-		User: domain.User{
-			ID:               mongoPat.Id.Hex(),
-			Name:             mongoPat.Name,
-			Email:            mongoPat.Email,
-			Phone:            mongoPat.Phone,
-			Location:         mongoPat.Location,
-			DateOfBirth:      mongoPat.DateOfBirth,
-			RegistrationDate: mongoPat.RegistrationDate,
-			Status:           mongoPat.Status,
-			CardID:           mongoPat.CardId,
-		},
-		Affiliation: mongoPat.Affiliation,
+	patient := mongoPat.toDomain()
+	return &patient, nil
+
+}
+
+func (r *MongoPatientRepository) Activate(ctx context.Context, id string) (*domain.Patient, users.UserRepositoryError) {
+	objId, err := primitive.ObjectIDFromHex(id)
+
+	if err != nil {
+		return nil, &users.InvalidPropertyError[string]{
+			Property: "id",
+			Value:    id,
+			Reason:   "invalid id",
+		}
 	}
+
+	var mongoPat mongoPatient
+
+	err = r.coll.FindOneAndUpdate(
+		ctx,
+		primitive.M{"_id": objId},
+		primitive.M{"$set": primitive.M{"status": domain.Active}},
+	).Decode(&mongoPat)
+
+	if err != nil {
+		if err == mongo.ErrNoDocuments {
+			return nil, &users.NotFoundError[string]{
+				Resource: "patient",
+				Property: "id",
+				Value:    id,
+			}
+		} else {
+			return nil, &users.InternalError{
+				Message: err.Error(),
+			}
+		}
+	}
+
+	patient := mongoPat.toDomain()
 	return &patient, nil
 }
