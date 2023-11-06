@@ -1,10 +1,14 @@
 package users
 
-import "fmt"
+import (
+	"fmt"
+	"net/http"
+)
 
 type UserRepositoryError interface {
 	error
 	UserRepositoryError()
+	HttpStatusCode() int
 }
 
 type InvalidPropertyError[T any] struct {
@@ -21,6 +25,10 @@ func (ipe *InvalidPropertyError[T]) Error() string {
 		ipe.Value,
 		ipe.Reason,
 	)
+}
+
+func (ipe *InvalidPropertyError[T]) HttpStatusCode() int {
+	return http.StatusBadRequest
 }
 
 func (ipe *InvalidPropertyError[T]) UserRepositoryError() {
@@ -44,6 +52,10 @@ func (nfe *NotFoundError[T]) Error() string {
 	)
 }
 
+func (nfe *NotFoundError[T]) HttpStatusCode() int {
+	return http.StatusNotFound
+}
+
 func (nfe *NotFoundError[T]) UserRepositoryError() {
 	// This function is used to check that this is a User Repo Error
 }
@@ -64,6 +76,10 @@ func (aee *AlreadyExistsError[T]) Error() string {
 	)
 }
 
+func (aee *AlreadyExistsError[T]) HttpStatusCode() int {
+	return http.StatusConflict
+}
+
 func (aee *AlreadyExistsError[T]) UserRepositoryError() {
 	// This function is used to check that this is a User Repo Error
 }
@@ -80,6 +96,10 @@ func (ie *InternalError) Error() string {
 		"Internal error: %s",
 		ie.Message,
 	)
+}
+
+func (ie *InternalError) HttpStatusCode() int {
+	return http.StatusInternalServerError
 }
 
 func (ie *InternalError) UserRepositoryError() {
