@@ -7,6 +7,7 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type MongoPatientRepository struct {
@@ -36,11 +37,7 @@ func (r *MongoPatientRepository) FindOne(ctx context.Context, id string) (*domai
 	objId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		return nil, &users.InvalidPropertyError[string]{
-			Property: "id",
-			Value:    id,
-			Reason:   "invalid id",
-		}
+		return nil, MakeInvalidIdError(id)
 	}
 
 	var mongoPat mongoPatient
@@ -49,11 +46,7 @@ func (r *MongoPatientRepository) FindOne(ctx context.Context, id string) (*domai
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, &users.NotFoundError[string]{
-				Resource: "patient",
-				Property: "id",
-				Value:    id,
-			}
+			return nil, MakeNotFoundIdError("patient", id)
 		} else {
 			return nil, &users.InternalError{
 				Message: err.Error(),
@@ -113,11 +106,7 @@ func (r *MongoPatientRepository) Update(
 	objId, err := primitive.ObjectIDFromHex(input.ID)
 
 	if err != nil {
-		return nil, &users.InvalidPropertyError[string]{
-			Property: "id",
-			Value:    input.ID,
-			Reason:   "invalid id",
-		}
+		return nil, MakeInvalidIdError(input.ID)
 	}
 
 	mongoPat := mongoPatient{
@@ -136,15 +125,17 @@ func (r *MongoPatientRepository) Update(
 	}
 
 	var updatedMongoPat mongoPatient
-	err = r.coll.FindOneAndUpdate(ctx, primitive.M{"_id": objId}, primitive.M{"$set": mongoPat}).Decode(&updatedMongoPat)
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
+	err = r.coll.FindOneAndUpdate(
+		ctx,
+		primitive.M{"_id": objId},
+		primitive.M{"$set": mongoPat},
+		opts,
+	).Decode(&updatedMongoPat)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, &users.NotFoundError[string]{
-				Resource: "patient",
-				Property: "id",
-				Value:    input.ID,
-			}
+			return nil, MakeNotFoundIdError("patient", input.ID)
 		} else {
 			return nil, &users.InternalError{
 				Message: err.Error(),
@@ -161,28 +152,22 @@ func (r *MongoPatientRepository) Suspend(ctx context.Context, id string) (*domai
 	objId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		return nil, &users.InvalidPropertyError[string]{
-			Property: "id",
-			Value:    id,
-			Reason:   "invalid id",
-		}
+		return nil, MakeInvalidIdError(id)
 	}
 
 	var mongoPat mongoPatient
 
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	err = r.coll.FindOneAndUpdate(
 		ctx,
 		primitive.M{"_id": objId},
 		primitive.M{"$set": primitive.M{"status": domain.Suspended}},
+		opts,
 	).Decode(&mongoPat)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, &users.NotFoundError[string]{
-				Resource: "patient",
-				Property: "id",
-				Value:    id,
-			}
+			return nil, MakeNotFoundIdError("patient", id)
 		} else {
 			return nil, &users.InternalError{
 				Message: err.Error(),
@@ -199,28 +184,22 @@ func (r *MongoPatientRepository) Activate(ctx context.Context, id string) (*doma
 	objId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
-		return nil, &users.InvalidPropertyError[string]{
-			Property: "id",
-			Value:    id,
-			Reason:   "invalid id",
-		}
+		return nil, MakeInvalidIdError(id)
 	}
 
 	var mongoPat mongoPatient
 
+	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	err = r.coll.FindOneAndUpdate(
 		ctx,
 		primitive.M{"_id": objId},
 		primitive.M{"$set": primitive.M{"status": domain.Active}},
+		opts,
 	).Decode(&mongoPat)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, &users.NotFoundError[string]{
-				Resource: "patient",
-				Property: "id",
-				Value:    id,
-			}
+			return nil, MakeNotFoundIdError("patient", id)
 		} else {
 			return nil, &users.InternalError{
 				Message: err.Error(),

@@ -224,7 +224,7 @@ func testUpdatePatient(
 
 	// Compare the patients to make sure they are the same
 	if !reflect.DeepEqual(patient, expectedPatient) {
-		t.Errorf("Cound not get original patient\nExpected:\n\t%v\ngot\n\t%v", expectedPatient, patient)
+		t.Errorf("Cound not update original patient\nExpected:\n\t%v\ngot\n\t%v", expectedPatient, patient)
 	}
 
 	return *patient

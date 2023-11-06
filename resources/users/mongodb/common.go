@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"medysinc_user_ms/domain"
+	"medysinc_user_ms/resources/users"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
@@ -91,4 +92,22 @@ func mongoUserFromDomain(user domain.User) (MongoUser, error) {
 		Status:           user.Status,
 		CardId:           user.CardID,
 	}, nil
+}
+
+// Utility function to easily create an invalid id error
+func MakeInvalidIdError(id string) users.UserRepositoryError {
+	return &users.InvalidPropertyError[string]{
+		Property: "id",
+		Value:    id,
+		Reason:   "invalid id",
+	}
+}
+
+// Utility function to easily create an id not found error
+func MakeNotFoundIdError(resource string, id string) users.UserRepositoryError {
+	return &users.NotFoundError[string]{
+		Resource: resource,
+		Property: "id",
+		Value:    id,
+	}
 }
