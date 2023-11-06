@@ -43,7 +43,7 @@ func (pc *PatientController) CreatePatient(c echo.Context, req CreatePatientRequ
 	patient, err := pc.patRepo.Create(c.Request().Context(), input)
 
 	if err != nil {
-		return c.JSON(err.HttpStatusCode(), err.Error())
+		return echo.NewHTTPError(err.HttpStatusCode(), err.Error())
 	}
 
 	patRes := makePatientResponse(*patient)
@@ -55,7 +55,7 @@ func (pc *PatientController) GetPatient(c echo.Context, idReq controllers.UserId
 	patient, err := pc.patRepo.FindOne(c.Request().Context(), idReq.ID)
 
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, err.Error())
+		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
 
 	patRes := makePatientResponse(*patient)
@@ -87,7 +87,7 @@ func (pc *PatientController) UpdatePatient(c echo.Context, req UpdatePatientRequ
 	patient, err := pc.patRepo.Update(c.Request().Context(), input)
 
 	if err != nil {
-		return c.String(err.HttpStatusCode(), err.Error())
+		return echo.NewHTTPError(err.HttpStatusCode(), err.Error())
 	}
 
 	patRes := makePatientResponse(*patient)
@@ -100,7 +100,7 @@ func (pc *PatientController) SuspendPatient(c echo.Context, idReq controllers.Us
 	_, err := pc.patRepo.Suspend(c.Request().Context(), idReq.ID)
 
 	if err != nil {
-		return c.JSON(err.HttpStatusCode(), err.Error())
+		return echo.NewHTTPError(err.HttpStatusCode(), err.Error())
 	}
 
 	return c.NoContent(http.StatusOK)
@@ -111,7 +111,7 @@ func (pc *PatientController) ActivatePatient(c echo.Context, idReq controllers.U
 	_, err := pc.patRepo.Activate(c.Request().Context(), idReq.ID)
 
 	if err != nil {
-		return c.JSON(err.HttpStatusCode(), err.Error())
+		return echo.NewHTTPError(err.HttpStatusCode(), err.Error())
 	}
 
 	return c.NoContent(http.StatusOK)
