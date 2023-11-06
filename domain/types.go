@@ -8,14 +8,14 @@ const (
 )
 
 type Location struct {
-	Country string `json:"country,omitempty" validate:"required"`
-	City    string `json:"city,omitempty" validate:"required"`
-	Address string `json:"address,omitempty" validate:"required"`
+	Country string
+	City    string
+	Address string
 }
 
 type Name struct {
-	FirstName string `json:"firstName,omitempty" validate:"required"`
-	LastName  string `json:"lastName,omitempty" validate:"required"`
+	FirstName string
+	LastName  string
 }
 
 type PatientAffiliation string
@@ -54,29 +54,29 @@ const (
 )
 
 type User struct {
-	ID               string     `json:"id,omitempty" bson:"_id"`
-	Name             Name       `json:"name,omitempty" validate:"required"`
-	Email            string     `json:"email,omitempty" validate:"required,email"`
-	Phone            string     `json:"phone,omitempty" validate:"required"`
-	Location         Location   `json:"location,omitempty" validate:"required"`
-	DateOfBirth      string     `json:"dateOfBirth,omitempty" validate:"required"`
-	RegistrationDate string     `json:"registrationDate,omitempty" validate:"required"`
-	Status           UserStatus `json:"status,omitempty" validate:"required"`
-	CardID           string     `json:"CardId,omitempty" validate:"required"`
+	ID               string
+	Name             Name
+	Email            string
+	Phone            string
+	Location         Location
+	DateOfBirth      string
+	RegistrationDate string
+	Status           UserStatus
+	CardID           string
 }
 
 type Staff struct {
-	Position string `json:"position,omitempty" validate:"required"`
+	Position string
 	User
 }
 
 type Patient struct {
-	Affiliation PatientAffiliation `json:"affiliation,omitempty" validate:"required"`
+	Affiliation PatientAffiliation
 	User
 }
 
 type Doctor struct {
-	Specialty        DoctorSpecialty `json:"specialty,omitempty" validate:"required"`
-	MedicalLicenseID string          `json:"medicalLicenseID,omitempty" validate:"required"`
+	Specialty        DoctorSpecialty
+	MedicalLicenseID string
 	User
 }
