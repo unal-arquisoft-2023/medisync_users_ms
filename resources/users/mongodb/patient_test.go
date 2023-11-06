@@ -99,7 +99,7 @@ func setupTestDependencies(ctx context.Context, t *testing.T) *testDependencies 
 
 }
 
-func TestSuite(t *testing.T) {
+func PatientTestSuite(t *testing.T) {
 
 	ctx := context.Background()
 	deps := setupTestDependencies(ctx, t)
@@ -168,6 +168,8 @@ func TestSuite(t *testing.T) {
 		activatedPat := testActivatePatient(ctx, *deps.patRepo, pat.ID, t)
 		pat = &activatedPat
 	})
+
+	// TODO: Add tests for error cases
 
 }
 
