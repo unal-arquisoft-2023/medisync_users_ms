@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 )
 
 func main() {
@@ -38,6 +39,10 @@ func main() {
 	con.AddCustomDTOValidations(val)
 
 	e.Validator = val
+	e.Use(middleware.TimeoutWithConfig(middleware.TimeoutConfig{
+		Timeout:      5 * time.Second,
+		ErrorMessage: "Server timed out",
+	}))
 
 	patRepo := mongoRepos.NewMongoPatientRepository(db.PatCol)
 	patCon := pcon.NewPatientController(patRepo)
