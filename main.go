@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	pc "medysinc_user_ms/controllers/patient"
+	con "medysinc_user_ms/controllers"
+	pcon "medysinc_user_ms/controllers/patient"
 	"medysinc_user_ms/resources/configuration"
+	mdb "medysinc_user_ms/resources/database/mongo_database"
 	mongoRepos "medysinc_user_ms/resources/users/mongodb"
+	"medysinc_user_ms/resources/validation"
 	"medysinc_user_ms/routes"
 
 	"github.com/labstack/echo/v4"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
@@ -18,35 +19,22 @@ func main() {
 
 	ctx := context.Background()
 
-	configuration, err := configuration.NewConfigurationGodotEnv(".env")
-
+	config, err := configuration.NewConfigurationGodotEnv(".env")
 	if err != nil {
 		panic(err)
 	}
 
-	mongoURI, err := configuration.Get("MONGO_URI")
-
-	fmt.Println("MONGO_URI")
-	fmt.Println(mongoURI)
-	if err != nil {
-		panic(err)
-	}
-
-	clientOptions :=
-		options.Client().
-			ApplyURI(mongoURI)
-
-	mongoClient, err := mongo.Connect(ctx, clientOptions)
-
-	if err != nil {
-		panic(err)
-	}
-	db := mongoClient.Database("medisync")
-	patColl := db.Collection("patients")
-	patRepo := mongoRepos.NewMongoPatientRepository(patColl)
+	db := mdb.NewMongoDatabase(ctx, config)
 
 	e := echo.New()
-	patCon := pc.NewPatientController(patRepo)
+	val := validation.NewMedisyncValidator()
+	pcon.AddCustomDTOValidations(val)
+	con.AddCustomDTOValidations(val)
+
+	e.Validator = val
+
+	patRepo := mongoRepos.NewMongoPatientRepository(db.PatCol)
+	patCon := pcon.NewPatientController(patRepo)
 
 	routes.PatientRoute(e, patCon)
 

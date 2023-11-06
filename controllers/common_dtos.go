@@ -1,6 +1,11 @@
 package controllers
 
-import "medysinc_user_ms/domain"
+import (
+	"medysinc_user_ms/domain"
+	"medysinc_user_ms/resources/validation"
+
+	"github.com/go-playground/validator"
+)
 
 type NameDTO struct {
 	FirstName string `json:"firstName" validate:"required"`
@@ -31,7 +36,7 @@ type UserCreationRequest struct {
 	Location         LocationDTO   `json:"location" validate:"required"`
 	DateOfBirth      string        `json:"dateOfBirth" validate:"required"`
 	RegistrationDate string        `json:"registrationDate" validate:"required"`
-	Status           UserStatusDTO `json:"status" validate:"required"`
+	Status           UserStatusDTO `json:"status" validate:"required,isUserStatus"`
 	CardID           string        `json:"cardId" validate:"required"`
 }
 
@@ -43,7 +48,7 @@ type UserUpdateRequest struct {
 	Location         LocationDTO   `json:"location" validate:"required"`
 	DateOfBirth      string        `json:"dateOfBirth" validate:"required"`
 	RegistrationDate string        `json:"registrationDate" validate:"required"`
-	Status           UserStatusDTO `json:"status" validate:"required"`
+	Status           UserStatusDTO `json:"status" validate:"required,isUserStatus"`
 	CardID           string        `json:"cardId" validate:"required"`
 }
 
@@ -57,4 +62,21 @@ type UserResponse struct {
 	RegistrationDate string        `json:"registrationDate"`
 	Status           UserStatusDTO `json:"status"`
 	CardID           string        `json:"cardId"`
+}
+
+func AddCustomDTOValidations(
+	val *validation.MedisyncValidator,
+) {
+
+	val.Validator.RegisterValidation("isUserStatus", func(fl validator.FieldLevel) bool {
+		status := UserStatusDTO(fl.Field().String())
+
+		switch status {
+		case Active, Suspended:
+			return true
+		default:
+			return false
+		}
+	})
+
 }

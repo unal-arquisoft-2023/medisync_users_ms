@@ -64,32 +64,24 @@ func setupTestDependencies(ctx context.Context, t *testing.T) *testDependencies 
 			ApplyURI(mongoURIFail).
 			SetServerSelectionTimeout(time.Millisecond * 100)
 
-	clientFail, err := mongo.Connect(ctx, clientOptionsFail)
-
-	if err != nil {
-		t.Fatal(err)
-		return nil
-	}
-
 	mongoDB, err := configuration.Get("MONGO_DB")
 	if err != nil {
 		t.Fatal(err)
 		return nil
 	}
 
-	mongoPatientCollection, err := configuration.Get("MONGO_PATIENT_COLLECTION")
-
+	clientFail, err := mongo.Connect(ctx, clientOptionsFail)
 	if err != nil {
 		t.Fatal("Fail connection did not fail", err)
 		return nil
 	}
 
 	db := client.Database(mongoDB)
-	coll := db.Collection(mongoPatientCollection)
+	coll := db.Collection("patients")
 	patRep := NewMongoPatientRepository(coll)
 
 	dbFail := clientFail.Database(mongoDB)
-	collFail := dbFail.Collection(mongoPatientCollection)
+	collFail := dbFail.Collection("patients")
 	patRepFail := NewMongoPatientRepository(collFail)
 
 	return &testDependencies{

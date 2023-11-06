@@ -3,6 +3,9 @@ package patient
 import (
 	"medysinc_user_ms/controllers"
 	"medysinc_user_ms/domain"
+	"medysinc_user_ms/resources/validation"
+
+	"github.com/go-playground/validator"
 )
 
 type PatientAffiliationDTO string
@@ -15,17 +18,17 @@ const (
 
 type CreatePatientRequest struct {
 	controllers.UserCreationRequest `json:",inline"`
-	Affiliation                     string `json:"affiliation" validate:"required"`
+	Affiliation                     PatientAffiliationDTO `json:"affiliation" validate:"required,isAffiliation"`
 }
 
 type UpdatePatientRequest struct {
 	controllers.UserUpdateRequest `json:",inline"`
-	Affiliation                   string `json:"affiliation" validate:"required"`
+	Affiliation                   PatientAffiliationDTO `json:"affiliation" validate:"required,isAffiliation"`
 }
 
 type PatientResponse struct {
 	controllers.UserResponse `json:",inline"`
-	Affiliation              PatientAffiliationDTO `json:"affiliation" validate:"required"`
+	Affiliation              PatientAffiliationDTO `json:"affiliation"`
 }
 
 func makePatientResponse(p domain.Patient) PatientResponse {
@@ -47,4 +50,19 @@ func makePatientResponse(p domain.Patient) PatientResponse {
 		Affiliation: PatientAffiliationDTO(p.Affiliation),
 	}
 
+}
+
+func AddCustomDTOValidations(
+	val *validation.MedisyncValidator,
+) {
+	val.Validator.RegisterValidation("isAffiliation", func(fl validator.FieldLevel) bool {
+		affiliation := PatientAffiliationDTO(fl.Field().String())
+
+		switch affiliation {
+		case Public, Private, Insurance:
+			return true
+		default:
+			return false
+		}
+	})
 }
