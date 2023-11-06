@@ -99,7 +99,7 @@ func setupTestDependencies(ctx context.Context, t *testing.T) *testDependencies 
 
 }
 
-func PatientTestSuite(t *testing.T) {
+func TestPatientRepo(t *testing.T) {
 
 	ctx := context.Background()
 	deps := setupTestDependencies(ctx, t)
