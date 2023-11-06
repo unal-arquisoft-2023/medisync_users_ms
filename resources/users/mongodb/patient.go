@@ -4,6 +4,7 @@ import (
 	"context"
 	"medysinc_user_ms/domain"
 	"medysinc_user_ms/resources/users"
+	"time"
 
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -66,15 +67,15 @@ func (r *MongoPatientRepository) Create(
 
 	mongoPat := mongoPatient{
 		MongoUser: MongoUser{
-			Id:               primitive.NewObjectID(),
-			Name:             mongoNameFromDomain(input.Name),
-			Email:            input.Email,
-			Phone:            input.Phone,
-			Location:         mongoLocFromDomain(input.Location),
-			DateOfBirth:      input.DateOfBirth,
-			RegistrationDate: input.RegistrationDate,
-			Status:           input.Status,
-			CardId:           input.CardID,
+			Id:                    primitive.NewObjectID(),
+			Name:                  mongoNameFromDomain(input.Name),
+			Email:                 input.Email,
+			Phone:                 input.Phone,
+			Location:              mongoLocFromDomain(input.Location),
+			DateOfBirth:           primitive.NewDateTimeFromTime(input.DateOfBirth),
+			RegistrationTimeStamp: primitive.NewDateTimeFromTime(time.Now()),
+			Status:                input.Status,
+			CardId:                input.CardID,
 		},
 		Affiliation: input.Affiliation,
 	}
@@ -111,15 +112,14 @@ func (r *MongoPatientRepository) Update(
 
 	mongoPat := mongoPatient{
 		MongoUser: MongoUser{
-			Id:               objId,
-			Name:             mongoNameFromDomain(input.Name),
-			Email:            input.Email,
-			Phone:            input.Phone,
-			Location:         mongoLocFromDomain(input.Location),
-			DateOfBirth:      input.DateOfBirth,
-			RegistrationDate: input.RegistrationDate,
-			Status:           input.Status,
-			CardId:           input.CardID,
+			Id:          objId,
+			Name:        mongoNameFromDomain(input.Name),
+			Email:       input.Email,
+			Phone:       input.Phone,
+			Location:    mongoLocFromDomain(input.Location),
+			DateOfBirth: primitive.NewDateTimeFromTime(input.DateOfBirth),
+			Status:      input.Status,
+			CardId:      input.CardID,
 		},
 		Affiliation: input.Affiliation,
 	}

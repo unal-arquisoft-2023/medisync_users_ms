@@ -1,5 +1,7 @@
 package domain
 
+import "time"
+
 type UserStatus string
 
 const (
@@ -54,15 +56,15 @@ const (
 )
 
 type User struct {
-	ID               string
-	Name             Name
-	Email            string
-	Phone            string
-	Location         Location
-	DateOfBirth      string
-	RegistrationDate string
-	Status           UserStatus
-	CardID           string
+	ID                    string
+	Name                  Name
+	Email                 string
+	Phone                 string
+	Location              Location
+	DateOfBirth           time.Time
+	RegistrationTimeStamp time.Time
+	Status                UserStatus
+	CardID                string
 }
 
 type Staff struct {

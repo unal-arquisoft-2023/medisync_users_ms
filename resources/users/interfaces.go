@@ -3,31 +3,38 @@ package users
 import (
 	"context"
 	"medysinc_user_ms/domain"
+	"time"
 )
 
+type UserCreationInput struct {
+	Name        domain.Name
+	Email       string
+	Phone       string
+	Location    domain.Location
+	DateOfBirth time.Time
+	Status      domain.UserStatus
+	CardID      string
+}
+
 type PatientCreationInput struct {
-	Name             domain.Name
-	Email            string
-	Phone            string
-	Location         domain.Location
-	DateOfBirth      string
-	RegistrationDate string
-	Status           domain.UserStatus
-	CardID           string
-	Affiliation      domain.PatientAffiliation
+	UserCreationInput
+	Affiliation domain.PatientAffiliation
+}
+
+type UserUpdateInput struct {
+	ID          string
+	Name        domain.Name
+	Email       string
+	Phone       string
+	Location    domain.Location
+	DateOfBirth time.Time
+	Status      domain.UserStatus
+	CardID      string
 }
 
 type PatientUpdateInput struct {
-	ID               string
-	Name             domain.Name
-	Email            string
-	Phone            string
-	Location         domain.Location
-	DateOfBirth      string
-	RegistrationDate string
-	Status           domain.UserStatus
-	CardID           string
-	Affiliation      domain.PatientAffiliation
+	UserUpdateInput
+	Affiliation domain.PatientAffiliation
 }
 
 type PatientRepository interface {

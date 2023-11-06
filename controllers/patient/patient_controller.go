@@ -22,22 +22,23 @@ func NewPatientController(patRepo users.PatientRepository) *PatientController {
 func (pc *PatientController) CreatePatient(c echo.Context, req CreatePatientRequest) error {
 
 	input := users.PatientCreationInput{
-		Name: domain.Name{
-			FirstName: req.Name.FirstName,
-			LastName:  req.Name.LastName,
+		UserCreationInput: users.UserCreationInput{
+			Name: domain.Name{
+				FirstName: req.Name.FirstName,
+				LastName:  req.Name.LastName,
+			},
+			Email: req.Email,
+			Phone: req.Phone,
+			Location: domain.Location{
+				Country: req.Location.Country,
+				City:    req.Location.City,
+				Address: req.Location.Address,
+			},
+			DateOfBirth: req.DateOfBirth.Time(),
+			Status:      domain.UserStatus(req.Status),
+			CardID:      req.CardID,
 		},
-		Email: req.Email,
-		Phone: req.Phone,
-		Location: domain.Location{
-			Country: req.Location.Country,
-			City:    req.Location.City,
-			Address: req.Location.Address,
-		},
-		DateOfBirth:      req.DateOfBirth,
-		RegistrationDate: req.RegistrationDate,
-		Status:           domain.UserStatus(req.Status),
-		CardID:           req.CardID,
-		Affiliation:      domain.PatientAffiliation(req.Affiliation),
+		Affiliation: domain.PatientAffiliation(req.Affiliation),
 	}
 
 	patient, err := pc.patRepo.Create(c.Request().Context(), input)
@@ -65,23 +66,24 @@ func (pc *PatientController) GetPatient(c echo.Context, idReq controllers.UserId
 
 func (pc *PatientController) UpdatePatient(c echo.Context, req UpdatePatientRequest) error {
 	input := users.PatientUpdateInput{
-		ID: req.ID,
-		Name: domain.Name{
-			FirstName: req.Name.FirstName,
-			LastName:  req.Name.LastName,
+		UserUpdateInput: users.UserUpdateInput{
+			ID: req.ID,
+			Name: domain.Name{
+				FirstName: req.Name.FirstName,
+				LastName:  req.Name.LastName,
+			},
+			Email: req.Email,
+			Phone: req.Phone,
+			Location: domain.Location{
+				Country: req.Location.Country,
+				City:    req.Location.City,
+				Address: req.Location.Address,
+			},
+			DateOfBirth: req.DateOfBirth.Time(),
+			Status:      domain.UserStatus(req.Status),
+			CardID:      req.CardID,
 		},
-		Email: req.Email,
-		Phone: req.Phone,
-		Location: domain.Location{
-			Country: req.Location.Country,
-			City:    req.Location.City,
-			Address: req.Location.Address,
-		},
-		DateOfBirth:      req.DateOfBirth,
-		RegistrationDate: req.RegistrationDate,
-		Status:           domain.UserStatus(req.Status),
-		CardID:           req.CardID,
-		Affiliation:      domain.PatientAffiliation(req.Affiliation),
+		Affiliation: domain.PatientAffiliation(req.Affiliation),
 	}
 
 	patient, err := pc.patRepo.Update(c.Request().Context(), input)

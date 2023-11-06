@@ -51,28 +51,28 @@ func mongoLocFromDomain(loc domain.Location) MongoLocation {
 // A struct to manage users in the mongo database
 // main difference, the id is changed from string to primitive.ObjectID
 type MongoUser struct {
-	Id               primitive.ObjectID `bson:"_id,omitempty"`
-	Name             MongoName          `bson:"name,omitempty"`
-	Email            string             `bson:"email,omitempty"`
-	Phone            string             `bson:"phone,omitempty"`
-	Location         MongoLocation      `bson:"location,omitempty"`
-	DateOfBirth      string             `bson:"dateOfBirth,omitempty"`
-	RegistrationDate string             `bson:"registrationDate,omitempty"`
-	Status           domain.UserStatus  `bson:"status,omitempty"`
-	CardId           string             `bson:"CardId,omitempty"`
+	Id                    primitive.ObjectID `bson:"_id,omitempty"`
+	Name                  MongoName          `bson:"name,omitempty"`
+	Email                 string             `bson:"email,omitempty"`
+	Phone                 string             `bson:"phone,omitempty"`
+	Location              MongoLocation      `bson:"location,omitempty"`
+	DateOfBirth           primitive.DateTime `bson:"dateOfBirth,omitempty"`
+	RegistrationTimeStamp primitive.DateTime `bson:"registrationDate,omitempty"`
+	Status                domain.UserStatus  `bson:"status,omitempty"`
+	CardId                string             `bson:"CardId,omitempty"`
 }
 
 func (mu *MongoUser) toDomain() domain.User {
 	return domain.User{
-		ID:               mu.Id.Hex(),
-		Name:             mu.Name.toDomain(),
-		Email:            mu.Email,
-		Phone:            mu.Phone,
-		Location:         mu.Location.toDomain(),
-		DateOfBirth:      mu.DateOfBirth,
-		RegistrationDate: mu.RegistrationDate,
-		Status:           mu.Status,
-		CardID:           mu.CardId,
+		ID:                    mu.Id.Hex(),
+		Name:                  mu.Name.toDomain(),
+		Email:                 mu.Email,
+		Phone:                 mu.Phone,
+		Location:              mu.Location.toDomain(),
+		DateOfBirth:           mu.DateOfBirth.Time(),
+		RegistrationTimeStamp: mu.RegistrationTimeStamp.Time(),
+		Status:                mu.Status,
+		CardID:                mu.CardId,
 	}
 }
 
@@ -82,15 +82,15 @@ func mongoUserFromDomain(user domain.User) (MongoUser, error) {
 		return MongoUser{}, err
 	}
 	return MongoUser{
-		Id:               id,
-		Name:             mongoNameFromDomain(user.Name),
-		Email:            user.Email,
-		Phone:            user.Phone,
-		Location:         mongoLocFromDomain(user.Location),
-		DateOfBirth:      user.DateOfBirth,
-		RegistrationDate: user.RegistrationDate,
-		Status:           user.Status,
-		CardId:           user.CardID,
+		Id:                    id,
+		Name:                  mongoNameFromDomain(user.Name),
+		Email:                 user.Email,
+		Phone:                 user.Phone,
+		Location:              mongoLocFromDomain(user.Location),
+		DateOfBirth:           primitive.NewDateTimeFromTime(user.DateOfBirth),
+		RegistrationTimeStamp: primitive.NewDateTimeFromTime(user.RegistrationTimeStamp),
+		Status:                user.Status,
+		CardId:                user.CardID,
 	}, nil
 }
 

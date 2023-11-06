@@ -96,16 +96,23 @@ func TestPatientRepo(t *testing.T) {
 	ctx := context.Background()
 	deps := setupTestDependencies(ctx, t)
 
+	birthDate, err := time.Parse(time.DateOnly, "1999-01-02")
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
 	patIn := PatientCreationInput{
-		Name:             domain.Name{FirstName: "test", LastName: "test"},
-		Email:            "test@mail.com",
-		Phone:            "123456789",
-		Location:         domain.Location{Country: "test", City: "test", Address: "test"},
-		DateOfBirth:      "test",
-		RegistrationDate: "test",
-		Status:           domain.Active,
-		CardID:           "test",
-		Affiliation:      domain.Private,
+		UserCreationInput: UserCreationInput{
+			Name:        domain.Name{FirstName: "test", LastName: "test"},
+			Email:       "test@mail.com",
+			Phone:       "123456789",
+			Location:    domain.Location{Country: "test", City: "test", Address: "test"},
+			DateOfBirth: birthDate,
+			Status:      domain.Active,
+			CardID:      "test",
+		},
+		Affiliation: domain.Private,
 	}
 
 	var pat *domain.Patient
@@ -129,21 +136,20 @@ func TestPatientRepo(t *testing.T) {
 	pat.Location.Country = "test2"
 	pat.Location.City = "test2"
 	pat.Location.Address = "test2"
-	pat.DateOfBirth = "test2"
-	pat.RegistrationDate = "test2"
 	pat.CardID = "test2"
 
 	patUp := PatientUpdateInput{
-		ID:               pat.ID,
-		Name:             pat.Name,
-		Email:            pat.Email,
-		Phone:            pat.Phone,
-		Location:         pat.Location,
-		DateOfBirth:      pat.DateOfBirth,
-		RegistrationDate: pat.RegistrationDate,
-		Status:           pat.Status,
-		CardID:           pat.CardID,
-		Affiliation:      pat.Affiliation,
+		UserUpdateInput: UserUpdateInput{
+			ID:          pat.ID,
+			Name:        pat.Name,
+			Email:       pat.Email,
+			Phone:       pat.Phone,
+			Location:    pat.Location,
+			DateOfBirth: pat.DateOfBirth,
+			Status:      pat.Status,
+			CardID:      pat.CardID,
+		},
+		Affiliation: pat.Affiliation,
 	}
 
 	t.Run("TestUpdatePatient", func(t *testing.T) {
