@@ -18,8 +18,11 @@ type UserStatusDTO string
 const (
 	Active    UserStatusDTO = UserStatusDTO(domain.Active)
 	Suspended UserStatusDTO = UserStatusDTO(domain.Suspended)
-	Insurance UserStatusDTO = UserStatusDTO(domain.Insurance)
 )
+
+type UserIdRequest struct {
+	ID string `param:"id" validate:"required"`
+}
 
 type UserCreationRequest struct {
 	Name             NameDTO       `json:"name" validate:"required"`
@@ -33,7 +36,7 @@ type UserCreationRequest struct {
 }
 
 type UserUpdateRequest struct {
-	ID               string        `json:"id" validate:"required"`
+	ID               string        `param:"id" validate:"required"`
 	Name             NameDTO       `json:"name" validate:"required"`
 	Email            string        `json:"email" validate:"required,email"`
 	Phone            string        `json:"phone" validate:"required"`

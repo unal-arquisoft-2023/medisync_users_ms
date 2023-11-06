@@ -6,7 +6,7 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func bindJSON[T any](f func(c echo.Context, req T) error) echo.HandlerFunc {
+func bindReq[T any](f func(c echo.Context, req T) error) echo.HandlerFunc {
 	return func(c echo.Context) error {
 
 		var req T
