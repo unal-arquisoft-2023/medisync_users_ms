@@ -104,4 +104,46 @@ func AddCustomDTOValidations(
 		}
 	})
 
+	val.Validator.RegisterValidation("isSpecialty", func(fl validator.FieldLevel) bool {
+		specialty := DoctorSpecialtyDTO(fl.Field().String())
+
+		switch specialty {
+		case GeneralMedicine, Pediatrics, Cardiology, Orthopedics, Dermatology, Gastroenterology, Neurology, Ophthalmology, Oncology, Otolaryngology, Urology, Psychiatry, Obstetrics, Gynecology, Anesthesiology, Radiology, Pathology, Emergency, FamilyMedicine, InternalMedicine, Surgery, Other:
+			return true
+		default:
+			return false
+		}
+	})
+
+}
+
+type DoctorSpecialtyDTO string
+
+const (
+	GeneralMedicine  DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.GeneralMedicine)
+	Pediatrics       DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Pediatrics)
+	Cardiology       DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Cardiology)
+	Orthopedics      DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Orthopedics)
+	Dermatology      DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Dermatology)
+	Gastroenterology DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Gastroenterology)
+	Neurology        DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Neurology)
+	Ophthalmology    DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Ophthalmology)
+	Oncology         DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Oncology)
+	Otolaryngology   DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Otolaryngology)
+	Urology          DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Urology)
+	Psychiatry       DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Psychiatry)
+	Obstetrics       DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Obstetrics)
+	Gynecology       DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Gynecology)
+	Anesthesiology   DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Anesthesiology)
+	Radiology        DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Radiology)
+	Pathology        DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Pathology)
+	Emergency        DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Emergency)
+	FamilyMedicine   DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.FamilyMedicine)
+	InternalMedicine DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.InternalMedicine)
+	Surgery          DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Surgery)
+	Other            DoctorSpecialtyDTO = DoctorSpecialtyDTO(domain.Other)
+)
+
+type SpecialtyRequest struct {
+	Specialty DoctorSpecialtyDTO `json:"specialty" validate:"required,isSpecialty"`
 }

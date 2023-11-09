@@ -118,3 +118,20 @@ func (pc *PatientController) ActivatePatient(c echo.Context, idReq controllers.U
 
 	return c.NoContent(http.StatusOK)
 }
+
+// Route to get all patients
+func (pc *PatientController) GetAllPatients(c echo.Context) error {
+	patients, err := pc.patRepo.FindAll(c.Request().Context())
+
+	if err != nil {
+		return echo.NewHTTPError(err.HttpStatusCode(), err.Error())
+	}
+
+	patRes := make([]PatientResponse, 0)
+
+	for _, patient := range patients {
+		patRes = append(patRes, makePatientResponse(patient))
+	}
+
+	return c.JSON(http.StatusOK, patRes)
+}

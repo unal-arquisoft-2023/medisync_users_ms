@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	con "medysinc_user_ms/controllers"
+	"medysinc_user_ms/controllers/doctor"
 	pcon "medysinc_user_ms/controllers/patient"
+	"medysinc_user_ms/controllers/staff"
 	"medysinc_user_ms/resources/configuration"
 	mdb "medysinc_user_ms/resources/database/mongo_database"
 	mongoRepos "medysinc_user_ms/resources/users/mongodb"
@@ -47,7 +49,15 @@ func main() {
 	patRepo := mongoRepos.NewMongoPatientRepository(db.PatCol)
 	patCon := pcon.NewPatientController(patRepo)
 
+	staffRepo := mongoRepos.NewMongoStaffRepository(db.StaffCol)
+	staffCon := staff.NewStaffController(staffRepo)
+
+	doctorRepo := mongoRepos.NewMongoDoctorRepository(db.DoctorCol)
+	doctorCon := doctor.NewDoctorController(doctorRepo)
+
 	routes.PatientRoute(e, patCon)
+	routes.StaffRoute(e, staffCon)
+	routes.DoctorRoute(e, doctorCon)
 
 	// Start server
 	go func() {

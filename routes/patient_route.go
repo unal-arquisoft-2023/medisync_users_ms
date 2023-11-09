@@ -13,4 +13,5 @@ func PatientRoute(e *echo.Echo, patCon *pc.PatientController) {
 	e.PUT("/patient/:id", bindAndValidateReq[pc.UpdatePatientRequest](patCon.UpdatePatient))
 	e.PUT("/patient/:id/suspend", bindAndValidateReq[c.UserIdRequest](patCon.SuspendPatient))
 	e.PUT("/patient/:id/activate", bindAndValidateReq[c.UserIdRequest](patCon.ActivatePatient))
+	e.GET("/patients", patCon.GetAllPatients)
 }

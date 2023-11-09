@@ -11,43 +11,45 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type MongoPatientRepository struct {
+type MongoDoctorRepository struct {
 	coll *mongo.Collection
 }
 
-// Creates a new mongo patient repository
-func NewMongoPatientRepository(coll *mongo.Collection) users.PatientRepository {
-	return &MongoPatientRepository{coll}
+// Creates a new mongo Doctor repository
+func NewMongoDoctorRepository(coll *mongo.Collection) users.DoctorRepository {
+	return &MongoDoctorRepository{coll}
 }
 
-type mongoPatient struct {
-	Affiliation domain.PatientAffiliation `bson:"affiliation,omitempty"`
-	MongoUser   `bson:",inline"`
+type mongoDoctor struct {
+	Specialty        domain.DoctorSpecialty `bson:"specialty,omitempty"`
+	MedicalLicenseID string                 `bson:"medicalLicenseID,omitempty"`
+	MongoUser        `bson:",inline"`
 }
 
-// Converts a mongo patient to a domain patient
-func (mp *mongoPatient) toDomain() domain.Patient {
-	return domain.Patient{
-		User:        mp.MongoUser.toDomain(),
-		Affiliation: mp.Affiliation,
+// Converts a mongo Doctor to a domain Doctor
+func (mp *mongoDoctor) toDomain() domain.Doctor {
+	return domain.Doctor{
+		User:             mp.MongoUser.toDomain(),
+		Specialty:        mp.Specialty,
+		MedicalLicenseID: mp.MedicalLicenseID,
 	}
 }
 
-// Lets you find a patient by its id
-func (r *MongoPatientRepository) FindOne(ctx context.Context, id string) (*domain.Patient, users.UserRepositoryError) {
+// Lets you find a Doctor by its id
+func (r *MongoDoctorRepository) FindOne(ctx context.Context, id string) (*domain.Doctor, users.UserRepositoryError) {
 	objId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
 		return nil, MakeInvalidIdError(id)
 	}
 
-	var mongoPat mongoPatient
+	var mongoPat mongoDoctor
 
 	err = r.coll.FindOne(ctx, primitive.M{"_id": objId}).Decode(&mongoPat)
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, MakeNotFoundIdError("patient", id)
+			return nil, MakeNotFoundIdError("doctor", id)
 		} else {
 			return nil, &users.InternalError{
 				Message: err.Error(),
@@ -55,17 +57,17 @@ func (r *MongoPatientRepository) FindOne(ctx context.Context, id string) (*domai
 		}
 	}
 
-	patient := mongoPat.toDomain()
-	return &patient, nil
+	doctor := mongoPat.toDomain()
+	return &doctor, nil
 }
 
-// Lets you create a patient
-func (r *MongoPatientRepository) Create(
+// Lets you create a doctor
+func (r *MongoDoctorRepository) Create(
 	ctx context.Context,
-	input users.PatientCreationInput,
-) (*domain.Patient, users.UserRepositoryError) {
+	input users.DoctorCreationInput,
+) (*domain.Doctor, users.UserRepositoryError) {
 
-	mongoPat := mongoPatient{
+	mongoPat := mongoDoctor{
 		MongoUser: MongoUser{
 			Id:                    primitive.NewObjectID(),
 			Name:                  mongoNameFromDomain(input.Name),
@@ -77,7 +79,8 @@ func (r *MongoPatientRepository) Create(
 			Status:                input.Status,
 			CardId:                input.CardID,
 		},
-		Affiliation: input.Affiliation,
+		Specialty:        input.Specialty,
+		MedicalLicenseID: input.MedicalLicenseID,
 	}
 
 	_, err := r.coll.InsertOne(ctx, mongoPat)
@@ -95,22 +98,22 @@ func (r *MongoPatientRepository) Create(
 		}
 	}
 
-	patient := mongoPat.toDomain()
-	return &patient, nil
+	doctor := mongoPat.toDomain()
+	return &doctor, nil
 }
 
-// Lets you update a patient
-func (r *MongoPatientRepository) Update(
+// Lets you update a doctor
+func (r *MongoDoctorRepository) Update(
 	ctx context.Context,
-	input users.PatientUpdateInput,
-) (*domain.Patient, users.UserRepositoryError) {
+	input users.DoctorUpdateInput,
+) (*domain.Doctor, users.UserRepositoryError) {
 	objId, err := primitive.ObjectIDFromHex(input.ID)
 
 	if err != nil {
 		return nil, MakeInvalidIdError(input.ID)
 	}
 
-	mongoPat := mongoPatient{
+	mongoPat := mongoDoctor{
 		MongoUser: MongoUser{
 			Id:          objId,
 			Name:        mongoNameFromDomain(input.Name),
@@ -121,10 +124,11 @@ func (r *MongoPatientRepository) Update(
 			Status:      input.Status,
 			CardId:      input.CardID,
 		},
-		Affiliation: input.Affiliation,
+		Specialty:        input.Specialty,
+		MedicalLicenseID: input.MedicalLicenseID,
 	}
 
-	var updatedMongoPat mongoPatient
+	var updatedMongoPat mongoDoctor
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	err = r.coll.FindOneAndUpdate(
 		ctx,
@@ -135,7 +139,7 @@ func (r *MongoPatientRepository) Update(
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, MakeNotFoundIdError("patient", input.ID)
+			return nil, MakeNotFoundIdError("doctor", input.ID)
 		} else {
 			return nil, &users.InternalError{
 				Message: err.Error(),
@@ -143,19 +147,19 @@ func (r *MongoPatientRepository) Update(
 		}
 	}
 
-	patient := updatedMongoPat.toDomain()
-	return &patient, nil
+	doctor := updatedMongoPat.toDomain()
+	return &doctor, nil
 }
 
-// function that lets you change the status of a patient to suspended
-func (r *MongoPatientRepository) Suspend(ctx context.Context, id string) (*domain.Patient, users.UserRepositoryError) {
+// function that lets you change the status of a doctor to suspended
+func (r *MongoDoctorRepository) Suspend(ctx context.Context, id string) (*domain.Doctor, users.UserRepositoryError) {
 	objId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
 		return nil, MakeInvalidIdError(id)
 	}
 
-	var mongoPat mongoPatient
+	var mongoPat mongoDoctor
 
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	err = r.coll.FindOneAndUpdate(
@@ -167,7 +171,7 @@ func (r *MongoPatientRepository) Suspend(ctx context.Context, id string) (*domai
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, MakeNotFoundIdError("patient", id)
+			return nil, MakeNotFoundIdError("doctor", id)
 		} else {
 			return nil, &users.InternalError{
 				Message: err.Error(),
@@ -175,19 +179,19 @@ func (r *MongoPatientRepository) Suspend(ctx context.Context, id string) (*domai
 		}
 	}
 
-	patient := mongoPat.toDomain()
-	return &patient, nil
+	doctor := mongoPat.toDomain()
+	return &doctor, nil
 
 }
 
-func (r *MongoPatientRepository) Activate(ctx context.Context, id string) (*domain.Patient, users.UserRepositoryError) {
+func (r *MongoDoctorRepository) Activate(ctx context.Context, id string) (*domain.Doctor, users.UserRepositoryError) {
 	objId, err := primitive.ObjectIDFromHex(id)
 
 	if err != nil {
 		return nil, MakeInvalidIdError(id)
 	}
 
-	var mongoPat mongoPatient
+	var mongoPat mongoDoctor
 
 	opts := options.FindOneAndUpdate().SetReturnDocument(options.After)
 	err = r.coll.FindOneAndUpdate(
@@ -199,7 +203,7 @@ func (r *MongoPatientRepository) Activate(ctx context.Context, id string) (*doma
 
 	if err != nil {
 		if err == mongo.ErrNoDocuments {
-			return nil, MakeNotFoundIdError("patient", id)
+			return nil, MakeNotFoundIdError("doctor", id)
 		} else {
 			return nil, &users.InternalError{
 				Message: err.Error(),
@@ -207,13 +211,13 @@ func (r *MongoPatientRepository) Activate(ctx context.Context, id string) (*doma
 		}
 	}
 
-	patient := mongoPat.toDomain()
-	return &patient, nil
+	doctor := mongoPat.toDomain()
+	return &doctor, nil
 }
 
-// Returns all patients
-func (r *MongoPatientRepository) FindAll(ctx context.Context) ([]domain.Patient, users.UserRepositoryError) {
-	var mongoPats []mongoPatient
+// Returns all doctors
+func (r *MongoDoctorRepository) FindAll(ctx context.Context) ([]domain.Doctor, users.UserRepositoryError) {
+	var mongoPats []mongoDoctor
 
 	cursor, err := r.coll.Find(ctx, primitive.M{})
 
@@ -231,10 +235,38 @@ func (r *MongoPatientRepository) FindAll(ctx context.Context) ([]domain.Patient,
 		}
 	}
 
-	patients := make([]domain.Patient, len(mongoPats))
+	doctors := make([]domain.Doctor, len(mongoPats))
 	for i, mongoPat := range mongoPats {
-		patients[i] = mongoPat.toDomain()
+		doctors[i] = mongoPat.toDomain()
 	}
 
-	return patients, nil
+	return doctors, nil
+}
+
+// Returns all doctors by specialty
+func (r *MongoDoctorRepository) FindBySpecialty(ctx context.Context, specialty domain.DoctorSpecialty) ([]domain.Doctor, users.UserRepositoryError) {
+	var mongoPats []mongoDoctor
+
+	cursor, err := r.coll.Find(ctx, primitive.M{"specialty": specialty})
+
+	if err != nil {
+		return nil, &users.InternalError{
+			Message: err.Error(),
+		}
+	}
+
+	err = cursor.All(ctx, &mongoPats)
+
+	if err != nil {
+		return nil, &users.InternalError{
+			Message: err.Error(),
+		}
+	}
+
+	doctors := make([]domain.Doctor, len(mongoPats))
+	for i, mongoPat := range mongoPats {
+		doctors[i] = mongoPat.toDomain()
+	}
+
+	return doctors, nil
 }

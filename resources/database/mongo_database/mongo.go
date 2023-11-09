@@ -9,7 +9,9 @@ import (
 )
 
 type MongoDatabase struct {
-	PatCol *mongo.Collection
+	PatCol    *mongo.Collection
+	StaffCol  *mongo.Collection
+	DoctorCol *mongo.Collection
 }
 
 func NewMongoDatabase(ctx context.Context, config configuration.ConfigurationRepository) *MongoDatabase {
@@ -35,8 +37,12 @@ func NewMongoDatabase(ctx context.Context, config configuration.ConfigurationRep
 
 	db := mongoClient.Database(mongoDB)
 	patColl := db.Collection("patients")
+	staffColl := db.Collection("staffs")
+	doctorColl := db.Collection("doctors")
 
 	return &MongoDatabase{
-		PatCol: patColl,
+		PatCol:    patColl,
+		StaffCol:  staffColl,
+		DoctorCol: doctorColl,
 	}
 }
