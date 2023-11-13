@@ -6,7 +6,7 @@ services:
     hostname: users_ms
     image: users_ms_img
     build:
-      context: ./medisync_users_ms
+      context: .
     ports:
       - 6000:6000
     networks:
