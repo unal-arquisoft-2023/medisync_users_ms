@@ -3,6 +3,7 @@ package configuration
 import (
 	"errors"
 	"fmt"
+	"os"
 
 	"github.com/joho/godotenv"
 )
@@ -17,7 +18,8 @@ type ConfigurationGodotEnv struct {
 }
 
 func (c *ConfigurationGodotEnv) Get(key string) (string, error) {
-	if val, ok := c.config[key]; ok {
+	val := os.Getenv(key)
+	if val != "" {
 		return val, nil
 	}
 	return "", errors.New(fmt.Sprintf("Key %s not found, using file %s", key, c.path))
@@ -25,14 +27,14 @@ func (c *ConfigurationGodotEnv) Get(key string) (string, error) {
 
 func NewConfigurationGodotEnv(path string) (ConfigurationRepository, error) {
 
-	config, err := godotenv.Read(path)
+	err := godotenv.Load(path)
+	// fmt.Println("Loaded config ", config)
 
 	if err != nil {
 		return nil, err
 	}
 
 	return &ConfigurationGodotEnv{
-		config: config,
-		path:   path,
+		path: path,
 	}, nil
 }
